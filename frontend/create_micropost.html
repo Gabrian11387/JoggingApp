@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create New Micropost</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item" id = "micropost-link">
+                        <a class="nav-link" href="microposts.html">Home</a>
+                    </li>
+                    <li class="nav-item" id = "current_user-link"  style="display: none;">
+                        <a class="nav-link" href="current_user.html">Profile</a>
+                    </li>
+                    <li class="nav-item" id = "users-link"  style="display: none;">
+                        <a class="nav-link" href="users.html">Users</a>
+                    </li>
+                    <li class="nav-item" id = "create_micropost-link"  style="display: none;">
+                        <a class="nav-link" href="create_micropost.html">Create micropost</a>
+                    </li>
+                    <li class="nav-item" id = "signup-link" style="display: none;">
+                        <a class="nav-link" href="signup.html">Signup</a>
+                    </li>
+                    <li class="nav-item" id = "login-link" style="display: none;">
+                        <a class="nav-link" href="login.html">Log in</a>
+                    </li>
+                </ul>
+                <button id="logout-button" class="btn btn-outline-light ml-auto border-0"  style="display: none;">Log Out</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1 class="text-center">Create New Micropost</h1>
+        <!-- Div-ul pentru afișarea mesajelor de succes sau de eroare -->
+        <div id="message" class="mb-3"></div>
+        <form id="create-micropost-form">
+            <div class="form-group">
+                <label for="date">Date and Time:</label>
+                <input type="datetime-local" class="form-control" id="date" name="date" required>
+            </div>            
+            <div class="form-group">
+                <label for="distance">Distance (in meters):</label>
+                <input type="number" class="form-control" id="distance" name="distance" required>
+            </div>
+            <div class="form-group">
+                <label for="time">Time (in minutes):</label>
+                <input type="number" class="form-control" id="time" name="time" required>
+            </div>
+            <div class="form-group">
+                <label for="time">Location:</label>
+                <input type="text" class="form-control" id="location" name="location" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Create Micropost</button>
+        </form>
+    </div>
+
+    <script src="delogare.js"></script>
+    <script>
+        
+        document.getElementById('create-micropost-form').addEventListener('submit', function(event) {
+        event.preventDefault(); 
+
+        getCurrentUser(function(userId) {
+            if (userId !== -1) {
+                var formData = {
+                    date: document.getElementById('date').value,
+                    distance: document.getElementById('distance').value,
+                    time: document.getElementById('time').value,
+                    location: document.getElementById('location').value,
+                    user_id: userId
+                };
+
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', 'http://localhost:3000/microposts', true);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                var token = getCookie('token');
+                xhr.setRequestHeader('Authorization', token);
+
+                xhr.onload = function() {
+                    if (xhr.status === 201) {
+                        console.log('Micropost created successfully!');
+
+                        document.getElementById('message').innerHTML = `
+                        <div class="alert alert-success" role="alert">
+                            Micropost created!
+                        </div>
+                        `;
+                        
+                        setTimeout(function() {
+                                window.location.href = 'microposts.html';
+                            }, 1500);
+                    } 
+                    else {
+                        console.error('Error creating micropost:', xhr.responseText);
+
+                        document.getElementById('message').innerHTML += `
+                                <div class="alert alert-danger" role="alert">
+                                    Micropost not created!
+                                </div>
+                            `;
+                    }
+                };
+                xhr.send(JSON.stringify({ micropost: formData }));
+            } else {
+                console.error('Error getting current user ID!');
+            }
+        });
+    });
+
+    function getCurrentUser(callback) {
+        var xhr = new XMLHttpRequest(); // Crearea obiectului XMLHttpRequest
+        xhr.open('GET', 'http://localhost:3000/current_user', true); // Configurarea cererii GET
+
+        var token = getCookie('token');
+        xhr.setRequestHeader('Authorization', token);
+
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) { 
+                if (xhr.status === 200) { 
+                    var userData = JSON.parse(xhr.responseText); 
+                    // Afișarea datelor utilizatorului în elementul cu id-ul 'userProfile'
+                    callback(userData.id);
+                } else {
+                    callback(-1);
+                }
+            }
+        };
+        xhr.send(); 
+    }
+
+    function getCookie(name) {
+        var value = "; " + document.cookie;
+        var parts = value.split("; " + name + "=");
+        if (parts.length == 2) return parts.pop().split(";").shift();
+    }
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Current User Profile</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        #micropost-cards {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            margin-top: 50px; 
+        }
+
+        .card {
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px;
+            width: 200px;
+            height: 280px; 
+            font-weight: 650;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background-image: url('images/imagine_site.jpg'); 
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+            opacity: 0.9;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card p {
+            font-size: 0.9em; 
+            margin: 0;
+            line-height: 1.4em;
+            flex-grow: 1; 
+        }
+
+        .card button {
+            margin: 5px 0;
+            flex-shrink: 0; 
+        }
+
+        .card .button-container {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .card-gol{
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px;
+            width: 200px;
+            font-weight: 500;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1{
+            text-align: center;
+        }
+        h2 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;    
+        }
+
+        p {
+            color: black;
+            margin-bottom: 5px;
+        }
+
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto; 
+            background-color: rgba(0,0,0,0.4); 
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto; 
+            padding: 20px;
+            border: 1px solid #888;
+            width: 20%; 
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+        }
+
+        .close {
+            color: #aaa;
+            float: left;
+            font-size: 28px;
+            font-weight: bold;
+            width: 3%;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Bara de navigare -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item" id = "micropost-link">
+                        <a class="nav-link" href="microposts.html">Home</a>
+                    </li>
+                    <li class="nav-item" id = "current_user-link"  style="display: none;">
+                        <a class="nav-link" href="current_user.html">Profile</a>
+                    </li>
+                    <li class="nav-item" id = "users-link"  style="display: none;">
+                        <a class="nav-link" href="users.html">Users</a>
+                    </li>
+                    <li class="nav-item" id = "create_micropost-link"  style="display: none;">
+                        <a class="nav-link" href="create_micropost.html">Create micropost</a>
+                    </li>
+                    <li class="nav-item" id = "signup-link" style="display: none;">
+                        <a class="nav-link" href="signup.html">Signup</a>
+                    </li>
+                    <li class="nav-item" id = "login-link" style="display: none;">
+                        <a class="nav-link" href="login.html">Log in</a>
+                    </li>
+                </ul>
+                <button id="logout-button" class="btn btn-outline-light ml-auto border-0"  style="display: none;">Log Out</button>
+            </div>
+        </div>
+    </nav>
+
+    <h1>Current User Profile</h1>
+    <br>
+    <div class="container d-flex justify-content-center">
+        <div id="user-card" class="row w-100">
+            <div class="user-info card-gol col-md-5 mx-auto my-3">
+                <h2 id="username"></h2>
+                <p id="email"></p>
+                <p id="created-at"></p>
+                <p id="updated-at"></p>
+            </div>
+            <div class="weekly-data-form card-gol col-md-5 mx-auto my-3">
+                <h2>Get Weekly Data</h2>
+                <form id="weekly-data-form">
+                    <div class="form-group">
+                        <label for="week">Select Week:</label>
+                        <input type="date" id="week" name="week" class="form-control" style="width: 70%;">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Get Weekly Data</button>
+                </form>
+                <div id="weekly-data-result"></div>
+            </div>
+        </div>
+    </div>
+    
+
+    <div id="micropost-cards"></div>
+
+    <div id="update-modal" class="modal">
+        <div class="modal-content">
+        <span class="close" onclick="closeUpdateModal()">&times;</span>
+        <div class="container">
+            <h1 class="text-center">Update Micropost</h1>
+            <form id="update-micropost-form">
+                <div id="message" class="mb-3"></div>
+                <input type="hidden" id="micropost-id" name="micropost_id">
+                <input type="hidden" id="user-id" name="user_id">
+                <div class="form-group">
+                    <label for="date">Date and Time:</label>
+                    <input type="datetime-local" class="form-control" id="date-update" name="date" required>
+                </div>            
+                <div class="form-group">
+                    <label for="distance">Distance (in meters):</label>
+                    <input type="number" class="form-control" id="distance-update" name="distance" required>
+                </div>
+                <div class="form-group">
+                    <label for="time">Time (in minutes):</label>
+                    <input type="number" class="form-control" id="time-update" name="time" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Update Micropost</button>
+            </form>
+        </div>
+        </div>
+    </div>
+
+    <script src="delogare.js"></script>
+    <script>
+        var microposts;
+
+        function formatDate(isoString) {
+            var options = {
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric', 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit'
+            };
+            return new Date(isoString).toLocaleString('en-US', options);
+        }
+
+        function displayUserData(userData) {
+            document.getElementById('username').textContent = userData.username;
+            document.getElementById('email').textContent = "Email: " + userData.email;
+            document.getElementById('created-at').textContent = "Created at: " + formatDate(userData.created_at);
+            document.getElementById('updated-at').textContent = "Updated at: " + formatDate(userData.updated_at);
+        }
+
+
+        function getCurrentUser() {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', 'http://localhost:3000/current_user', true); 
+            var token = getCookie('token');
+            xhr.setRequestHeader('Authorization', token);
+
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) { 
+                    if (xhr.status === 200) { 
+                        var userData = JSON.parse(xhr.responseText); // Parsarea răspunsului JSON
+                            displayUserData(userData);
+                            getUserPosts();
+                    } else {
+                        console.error('Eroare la obținerea datelor utilizatorului:', xhr.status);
+                    }
+                }
+            };
+            xhr.send(); 
+        }
+
+        function openUpdateModal(micropostId) {
+
+            var micropost = microposts.find(function(m) {
+                return m.id == micropostId;
+            });
+
+            document.getElementById("date-update").value = micropost.date;
+            document.getElementById("distance-update").value = micropost.distance;
+            document.getElementById("time-update").value = micropost.time;
+
+            
+            document.getElementById("micropost-id").value = micropostId;
+            document.getElementById("user-id").value = micropost.user_id;
+
+            var modal = document.getElementById("update-modal");
+            modal.style.display = "block";
+
+            document.body.style.overflow = "hidden";
+        }
+
+        function closeUpdateModal() {
+            var modal = document.getElementById("update-modal");
+            modal.style.display = "none";
+            
+            document.getElementById('message').style.display = "none";
+
+            // permitem afișarea barei de scroll
+            document.body.style.overflow = "auto";
+        }
+
+        function getCookie(name) {
+            var value = "; " + document.cookie;
+            var parts = value.split("; " + name + "=");
+            if (parts.length == 2) return parts.pop().split(";").shift();
+        }
+
+        function getUserPosts() {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', 'http://localhost:3000/user_posts', true); 
+            var token = getCookie('token');
+            xhr.setRequestHeader('Authorization', token);
+
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    microposts = JSON.parse(xhr.responseText);
+                    displayMicroposts(microposts);
+                } 
+                else {
+                    console.error('Eroare la obținerea postărilor utilizatorului:', xhr.status);
+                }
+                }
+            };
+            xhr.send();
+        }
+
+        function displayMicroposts(microposts) {
+            var container = document.getElementById("micropost-cards");
+            container.innerHTML = "";
+            microposts.forEach(function(micropost) {
+                var card = document.createElement("div");
+                card.className = "card";
+                var averageSpeed = (micropost.distance / 1000) / (micropost.time / 60); 
+                var distanceInKm = (micropost.distance / 1000);
+                var formattedDate = new Date(micropost.date).toLocaleString();
+                card.innerHTML =  "<p>Date: " + formattedDate + "</p>" +
+                                "<p>Distance: " + distanceInKm + " km</p>" + 
+                                "<p>Time: " + micropost.time + " minutes</p>" +
+                                "<p>Average Speed: " + averageSpeed.toFixed(2) + " km/h</p>" + 
+                                "<button class='btn btn-danger btn-delete mt-2' data-id='" + micropost.id + "'>Delete</button>" +
+                                "<button class='btn btn-info btn-update mt-1' data-id='" + micropost.id + "'>Update</button>"; 
+                container.appendChild(card);
+            });
+
+            var deleteButtons = document.getElementsByClassName("btn-delete");
+            for (var i = 0; i < deleteButtons.length; i++) {
+                deleteButtons[i].addEventListener("click", function(event) {
+                    var micropostId = event.target.getAttribute("data-id");
+                    deleteMicropost(micropostId);
+                });
+            }
+
+            var updateButtons = document.getElementsByClassName("btn-update");
+            for(var i = 0; i < updateButtons.length; i++){
+                updateButtons[i].addEventListener("click", function(event) {
+                    var micropostId = event.target.getAttribute("data-id");
+                    openUpdateModal(micropostId);
+                })
+            }
+        }
+
+        function deleteMicropost(micropostId) {
+            var xhr = new XMLHttpRequest();
+            xhr.open("DELETE", "http://localhost:3000/microposts/" + micropostId, true);
+            var token = getCookie('token');
+            xhr.setRequestHeader('Authorization', token);
+            xhr.onload = function () {
+                if (xhr.status === 204) {
+                    getUserPosts();
+                } else {
+                    console.error("Error deleting micropost:", xhr.responseText);
+                }
+            };
+            xhr.send();
+        }
+
+        document.getElementById("update-micropost-form").addEventListener("submit", function(event) {
+            event.preventDefault(); 
+
+            var micropostId = document.getElementById("micropost-id").value;
+            var date = document.getElementById("date-update").value;
+            var distance = document.getElementById("distance-update").value;
+            var time = document.getElementById("time-update").value;
+            var user_id = document.getElementById("user-id").value;
+
+            var formData = {
+                date: date,
+                distance: distance,
+                time: time,
+                user_id: user_id
+            };
+
+            updateMicropost(micropostId, formData);
+
+        });
+
+        function updateMicropost(micropostId, formData) {
+            var xhr = new XMLHttpRequest();
+            xhr.open("PUT", "http://localhost:3000/microposts/" + micropostId, true);
+            var token = getCookie('token');
+            xhr.setRequestHeader('Authorization', token);
+            xhr.setRequestHeader("Content-Type", "application/json");
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    // Răspunsul de la server conține micropostarea actualizată
+                    var updatedMicropost = JSON.parse(xhr.responseText);
+                    console.log("Micropost updated successfully:", updatedMicropost);
+                    // Afișează mesajul de succes în div-ul cu id-ul "message"
+                    document.getElementById('message').innerHTML = `
+                        <div class="alert alert-success" role="alert">
+                            Postare updatată!
+                        </div>
+                    `;
+                    
+                    setTimeout(closeUpdateModal, 1500);
+                    
+                    getUserPosts();
+                } 
+                else {
+                    // A intervenit o eroare la actualizare
+                    console.error("Error updating micropost:", xhr.responseText);
+                    document.getElementById('message').innerHTML = `
+                        <div class="alert alert-danger" role="alert">
+                            Update eșuat!
+                        </div>
+                    `;
+                }
+            };
+            // Trimiterea datelor actualizate către backend
+            xhr.send(JSON.stringify({ micropost: formData }));
+        }
+
+        document.getElementById("weekly-data-form").addEventListener("submit", function(event) {
+            event.preventDefault(); 
+
+            var week = document.getElementById("week").value;
+
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "http://localhost:3000/users/weekly_data", true);
+            xhr.setRequestHeader("Content-Type", "application/json");
+            var token = getCookie('token');
+            xhr.setRequestHeader('Authorization', token);
+
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        var data = JSON.parse(xhr.responseText);
+                        var distanceKm = (data.total_distance)/1000;
+                        document.getElementById("weekly-data-result").innerHTML = `
+                            <h3>Weekly Data</h3>
+                            <p>Total Distance: ${distanceKm} km</p>
+                            <p>Average Speed: ${((data.average_speed / 1000)*60).toFixed(2)} km/h</p>
+                        `;
+                    } else {
+                        // În caz de eroare, afișează un mesaj de eroare
+                        console.error('Eroare la obținerea datelor săptămânale:', xhr.status);
+                        document.getElementById("weekly-data-result").innerHTML = `
+                            <br>    
+                            <div class="alert alert-danger" role="alert">
+                                Eroare la obținerea datelor săptămânale.
+                            </div>
+                        `;
+                    }
+                }
+            };
+
+            xhr.send(JSON.stringify({ week: week }));
+        });
+
+        if(checkAuthentication())
+            getCurrentUser();
+
+    </script>
+</body>
+</html>

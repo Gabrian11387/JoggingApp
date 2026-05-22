@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scaletial-scale=1.0">
+    <title>Login</title>
+    <!-- Link către CSS-ul Bootstrap -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Bara de navigare -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item" id = "micropost-link">
+                        <a class="nav-link" href="microposts.html">Home</a>
+                    </li>
+                    <li class="nav-item" id = "current_user-link"  style="display: none;">
+                        <a class="nav-link" href="current_user.html">Profile</a>
+                    </li>
+                    <li class="nav-item" id = "users-link"  style="display: none;">
+                        <a class="nav-link" href="users.html">Users</a>
+                    </li>
+                    <li class="nav-item" id = "create_micropost-link"  style="display: none;">
+                        <a class="nav-link" href="create_micropost.html">Create micropost</a>
+                    </li>
+                    <li class="nav-item" id = "signup-link" style="display: none;">
+                        <a class="nav-link" href="signup.html">Signup</a>
+                    </li>
+                    <li class="nav-item" id = "login-link" style="display: none;">
+                        <a class="nav-link" href="login.html">Log in</a>
+                    </li>
+                </ul>
+                <button id="logout-button" class="btn btn-outline-light ml-auto border-0"  style="display: none;">Log Out</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Formularul de login -->
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <h2 class="mb-4 text-center">Login</h2>
+                <!-- Div-ul pentru afișarea mesajelor de succes sau de eroare -->
+                <div id="message" class="mb-3"></div>
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Log In</button>
+                </form>
+            </div>
+        </div>
+    </div>
+   
+    <script src="delogare.js"></script>
+
+    <script>
+        function getCookie(name) {
+            var nameEQ = name + "=";
+            var ca = document.cookie.split(';');
+            for(var i=0;i < ca.length;i++) {
+                var c = ca[i];
+                while (c.charAt(0)==' ') c = c.substring(1,c.length);
+                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+            }
+            return null;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+        // Logica afisare mesaj dupa delogare
+
+        var logoutMessage = getCookie("logoutMessage");
+
+        if (logoutMessage && logoutMessage == "You are logged out!") {
+            var messageElement = document.getElementById('message');
+            if (messageElement) {
+                messageElement.innerHTML = `
+                    <div class="alert alert-info" role="alert">
+                        <strong> ${logoutMessage} </strong>
+                    </div>
+                `;
+            }
+
+            // Șterge cookie-ul 
+            document.cookie = "logoutMessage=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            }
+        });
+
+        document.getElementById('login-form').addEventListener('submit', function(event) {
+        event.preventDefault(); 
+
+        var formData = {
+            email: document.getElementById('email').value,
+            password: document.getElementById('password').value
+        };
+
+        var xhr = new XMLHttpRequest();
+
+        xhr.open('POST', 'http://localhost:3000/login', true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+
+        xhr.onload = function() {
+            if (xhr.status == 200) {
+                var data = JSON.parse(xhr.responseText);
+
+                // Afișam mesajul de succes 
+                document.getElementById('message').innerHTML = `
+                    <div class="alert alert-success" role="alert">
+                        Login succeded!
+                    </div>
+                `;
+
+                // Salvam token-ul într-un cookie
+                document.cookie = `token=${data.token}; path=/`; 
+                console.log(document.cookie);
+
+                setTimeout(function() {
+                    window.location.href = 'microposts.html';
+                }, 1500); 
+            } 
+            else {
+                // Afișam mesajul de fail
+                document.getElementById('message').innerHTML = `
+                    <div class="alert alert-danger" role="alert">
+                        Login failed!
+                    </div>
+                `;
+            }
+        };
+
+        xhr.onerror = function() {
+            // Afișam mesajul de eroare 
+            document.getElementById('message').innerHTML = `
+                <div class="alert alert-danger" role="alert">
+                    Error connecting to the server!
+                </div>
+            `;
+        };
+
+        xhr.send(JSON.stringify(formData));
+    });
+    </script>
+</body>
+</html>

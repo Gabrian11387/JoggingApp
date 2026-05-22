@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <title>User Cards</title>
+    <style>
+        body {
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+
+        #user-cards {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            margin-top: 50px; 
+        }
+
+        .card {
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px;
+            width: 200px;
+            height: 320px; 
+            font-weight: 650;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card p {
+            font-size: 0.9em; 
+            margin: 0;
+            line-height: 1.4em;
+            flex-grow: 1; 
+        }
+
+        .card button {
+            margin: 5px 0;
+            flex-shrink: 0; 
+        }
+
+        .card .button-container {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        h2 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 1; 
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto; 
+            background-color: rgba(0,0,0,0.4); 
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto; 
+            padding: 20px;
+            border: 1px solid #888;
+            width: 25%; 
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+        }
+
+        .close {
+            color: #aaa;
+            float: left;
+            font-size: 28px;
+            font-weight: bold;
+            width: 3%;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <!-- Bara de navigare -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item" id = "micropost-link">
+                        <a class="nav-link" href="microposts.html">Home</a>
+                    </li>
+                    <li class="nav-item" id = "current_user-link"  style="display: none;">
+                        <a class="nav-link" href="current_user.html">Profile</a>
+                    </li>
+                    <li class="nav-item" id = "users-link"  style="display: none;">
+                        <a class="nav-link" href="users.html">Users</a>
+                    </li>
+                    <li class="nav-item" id = "create_micropost-link"  style="display: none;">
+                        <a class="nav-link" href="create_micropost.html">Create micropost</a>
+                    </li>
+                    <li class="nav-item" id = "signup-link" style="display: none;">
+                        <a class="nav-link" href="signup.html">Signup</a>
+                    </li>
+                    <li class="nav-item" id = "login-link" style="display: none;">
+                        <a class="nav-link" href="login.html">Log in</a>
+                    </li>
+                </ul>
+                <button id="logout-button" class="btn btn-outline-light ml-auto border-0"  style="display: none;">Log Out</button>
+            </div>
+        </div>
+    </nav>
+
+    <h1 style="text-align: center;">All users</h1>
+
+    <div id="user-cards"></div>
+
+    <div id="update-modal" class="modal">
+        <div class="modal-content">
+        <span class="close" onclick="closeUpdateModal()">&times;</span>
+        <div class="container">
+            <h1 class="text-center">Update Micropost</h1>
+            <div id="message" class="mb-3 mt-2"></div>
+            <form id="update-user-form">
+                <div id="message" class="mb-3"></div>
+                <input type="hidden" id="user-id" name="user_id">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" class="form-control" id="username" name="username" autocomplete="username" required>
+                    <span class="message-alert" id="usernameMessage"></span>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" class="form-control" id="email" name="email" required autocomplete="email" readonly>
+                    <span class="message" id="emailMessage"></span>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" class="form-control" id="password" name="password">
+                    <span class="message" id="passwordMessage"></span>
+                </div>
+                <div class="form-group">
+                    <label for="confirm-password">Confirm Password</label>
+                    <input type="password" class="form-control" id="confirm-password" name="confirm-password">
+                    <span class="message" id="confirmPasswordMessage"></span>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block w-100">Update User</button>
+            </form>
+        </div>
+        </div>
+    </div>
+
+    <script>
+
+        var users;
+        
+        function openUpdateModal(userId) {
+            
+            var user = users.find(function(m) {
+                return m.id == userId;
+            });
+
+            document.getElementById("username").value = user.username;
+            document.getElementById("email").value = user.email;
+
+            document.getElementById("user-id").value = userId;
+
+            document.getElementById("password").value = '';
+            document.getElementById("confirm-password").value = '';
+
+            var modal = document.getElementById("update-modal");
+            modal.style.display = "block";
+
+            // previne afișarea barei de scroll
+            document.body.style.overflow = "hidden";
+        }
+
+        function closeUpdateModal() {
+            var modal = document.getElementById("update-modal");
+            modal.style.display = "none";
+            
+            document.getElementById("message").style.display = "none";
+
+            // Elimină stilul pentru a permite afișarea barei de scroll
+            document.body.style.overflow = "auto";
+        }
+
+        function formatDate(isoString) {
+            var options = {
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric', 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit'
+            };
+            return new Date(isoString).toLocaleString('en-US', options);
+        }
+
+        function getUsers() {
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "http://localhost:3000/users", true);
+            var token = getCookie('token');
+            xhr.setRequestHeader('Authorization', token);
+
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    users = JSON.parse(xhr.responseText);
+                    displayUsers(users);
+                } else {
+                    var errorMessage = JSON.parse(xhr.responseText).error;
+                    console.error("Error: " + errorMessage);
+                }
+            };
+
+            xhr.onerror = function () {
+                console.error("Request failed");
+            };
+            
+            xhr.send();
+        }
+
+
+        function displayUsers(users) {
+            var container = document.getElementById("user-cards");
+            container.innerHTML = "";
+            users.forEach(function(user) {
+                var card = document.createElement("div");
+                card.className = "card";
+                card.innerHTML = "<h2>" + user.username + "</h2>" +
+                                  "<p>Email: " + user.email + "</p>" +
+                                  "<p>Created at: " + formatDate(user.created_at) + "</p>" +
+                                  "<p>Updated at: " + formatDate(user.updated_at) + "</p>" +
+                                  "<button class='btn btn-danger users-delete btn-delete mt-2' data-id='" + user.id + "'>Delete</button>" +
+                                  "<button class='btn btn-info users-update btn-update mt-1' data-id='" + user.id + "'>Update</button>";
+                
+                container.appendChild(card);
+
+                card.querySelector(".btn-delete").addEventListener("click", function(event) {
+                    var userId = event.target.getAttribute("data-id");
+                    deleteUser(userId);
+                });
+
+                card.querySelector(".btn-update").addEventListener("click", function(event) {
+                    var userId = event.target.getAttribute("data-id");
+                    openUpdateModal(userId);
+                });
+
+            });
+        }
+
+        document.getElementById("update-user-form").addEventListener("submit", function(event) {
+            event.preventDefault(); 
+
+            var userId = document.getElementById("user-id").value;
+            var username = document.getElementById("username").value;
+            var password = document.getElementById("password").value;
+            var password_confirmation = document.getElementById("confirm-password").value;
+
+            var formData = {
+                username: username,
+                email: "",
+                password: password,
+                password_confirmation: password_confirmation
+            };
+            
+            updateUser(userId, formData)
+        });
+
+        function getCookie(name) {
+            var value = "; " + document.cookie;
+            var parts = value.split("; " + name + "=");
+            if (parts.length == 2) return parts.pop().split(";").shift();
+        }
+
+        function updateUser(userId, formData) {
+            var xhr = new XMLHttpRequest();
+            xhr.open("PUT", "http://localhost:3000/users/" + userId, true);
+            xhr.setRequestHeader("Content-Type", "application/json");
+            var token = getCookie('token');
+            xhr.setRequestHeader('Authorization', token);
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    var user = JSON.parse(xhr.responseText);
+                    console.log("User updated successfully:", user);
+                    document.getElementById('message').innerHTML = `
+                        <div class="alert alert-success" role="alert">
+                            User updatat!
+                        </div>
+                    `;
+                    document.getElementById("message").style.display = "block";
+
+                    setTimeout(closeUpdateModal, 1500);
+
+                    getUsers();
+                } else {
+
+                    var errorMessage = "Error updating user: ";
+                    var errorResponse = JSON.parse(xhr.responseText);
+                    if (errorResponse.password && errorResponse.password.length > 0) {
+                        errorMessage += "Password is too short (minimum is 6 characters)";
+                    } 
+                    if(errorResponse.password_confirmation && errorResponse.password_confirmation.length > 0){
+                        errorMessage += "Passwords does not match!";
+                    }
+                        // Dacă nu, afișează mesajul de eroare generic
+                    
+                    document.getElementById('message').innerHTML = `
+                    <div class="alert alert-danger" role="alert">` +
+                        errorMessage +
+                    `</div>`;
+                    document.getElementById("message").style.display = "block";
+                }
+            };
+            xhr.send(JSON.stringify({ user: formData }));
+        }
+
+
+        function deleteUser(userId) {
+            var xhr = new XMLHttpRequest();
+            //var startTime = performance.now(); 
+            xhr.open("DELETE", "http://localhost:3000/users/" + userId, true);
+            xhr.setRequestHeader("Content-Type", "application/json");
+            var token = getCookie('token');
+            xhr.setRequestHeader('Authorization', token);
+            xhr.onload = function () {
+                // var endTime = performance.now(); 
+                // var duration = endTime - startTime; 
+                //console.log("Durata execuției apelului de ștergere: " + duration + " ms"); 
+
+                if (xhr.status === 200 && xhr.readyState === 4) {
+                    getUsers();
+                } else if (xhr.status !== 200) {
+                    console.log(xhr.statusText);
+                }
+            };
+            xhr.send();
+        }
+
+        getUsers();
+    </script>
+    <script src="delogare.js" defer></script>
+</body>
+</html>

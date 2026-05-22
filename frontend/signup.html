@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item" id = "micropost-link">
+                        <a class="nav-link" href="microposts.html">Home</a>
+                    </li>
+                    <li class="nav-item" id = "current_user-link"  style="display: none;">
+                        <a class="nav-link" href="current_user.html">Profile</a>
+                    </li>
+                    <li class="nav-item" id = "users-link"  style="display: none;">
+                        <a class="nav-link" href="users.html">Users</a>
+                    </li>
+                    <li class="nav-item" id = "create_micropost-link"  style="display: none;">
+                        <a class="nav-link" href="create_micropost.html">Create micropost</a>
+                    </li>
+                    <li class="nav-item" id = "signup-link" style="display: none;">
+                        <a class="nav-link" href="signup.html">Signup</a>
+                    </li>
+                    <li class="nav-item" id = "login-link" style="display: none;">
+                        <a class="nav-link" href="login.html">Log in</a>
+                    </li>
+                </ul>
+                <button id="logout-button" class="btn btn-outline-light ml-auto border-0"  style="display: none;">Log Out</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <h2 class="mb-4 text-center">Sign Up</h2>
+                <!-- Div-ul pentru afișarea mesajelor de succes sau de eroare -->
+                <div id="message" class="mb-3"></div>
+                <form id="signup-form">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" class="form-control" id="username" name="username" required>
+                        <span class="message-alert" id="usernameMessage"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                        <span class="message" id="emailMessage"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                        <span class="message" id="passwordMessage"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirm-password">Confirm Password</label>
+                        <input type="password" class="form-control" id="confirm-password" name="confirm-password" required>
+                        <span class="message" id="confirmPasswordMessage"></span>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block" id="signup-button" disabled>Sign Up</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="delogare.js"></script>
+
+    <script>
+        document.getElementById('signup-form').addEventListener('submit', function(event) {
+            event.preventDefault(); 
+
+            var formData = {
+                username: document.getElementById('username').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                password_confirmation: document.getElementById('confirm-password').value
+            };
+
+            var formDataLogin = {
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value
+            };
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', 'http://localhost:3000/signup', true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.onload = function() {
+                if (xhr.status == 201) {
+                    // Daca am avut succes la signup, facem si logarea
+                    console.log('Sign up successful!');
+                    document.getElementById('message').innerHTML = `
+                    <div class="alert alert-success" role="alert">
+                        Signup succeded!
+                    </div>
+                    `;
+
+                    // Facem si cererea de login care implicit va avea succes(pentru ca e precedata de signup)
+                    var xhrLogin = new XMLHttpRequest();
+
+                    // Configurează cererea de login
+                    xhrLogin.open('POST', 'http://localhost:3000/login', true);
+                    xhrLogin.setRequestHeader('Content-Type', 'application/json');
+
+                    // Setează funcția de tratare a evenimentului onload pentru cererea de login
+                    xhrLogin.onload = function() {
+                        if (xhrLogin.status == 200) {
+                            var data = JSON.parse(xhrLogin.responseText);
+
+                            // Afișează mesajul de succes pentru login
+                            document.getElementById('message').innerHTML += `
+                                <div class="alert alert-success" role="alert">
+                                    Login succeeded!
+                                </div>
+                            `;
+
+                            // Salvează token-ul într-un cookie
+                            document.cookie = `token=${data.token}; path=/`;
+
+                            // Redirectează la pagina de home după o scurtă întârziere
+                            setTimeout(function() {
+                                window.location.href = 'microposts.html';
+                            }, 1500); // 1000 de milisecunde = 1 secundă
+                        } else {
+                            // Afișează mesajul de eroare pentru login
+                            document.getElementById('message').innerHTML += `
+                                <div class="alert alert-danger" role="alert">
+                                    Login failed after signup!
+                                </div>
+                            `;
+                        }
+                    };
+
+                    // Trimite cererea de login cu datele JSON
+                    xhrLogin.send(JSON.stringify(formDataLogin));
+                } 
+                else {
+                    console.error('Error signing up:', xhr.responseText);
+                    var errorMessage = "";
+                    var responseObject = JSON.parse(xhr.responseText);
+                    for (var key in responseObject) {
+                        errorMessage += key.charAt(0).toUpperCase() + key.slice(1) + " ";
+                        errorMessage += responseObject[key].join(", ") + "! ";
+                    }
+                    document.getElementById('message').innerHTML = `
+                        <div class="alert alert-danger" role="alert">
+                            ${errorMessage}
+                        </div>
+                    `;
+                }
+            };
+            xhr.send(JSON.stringify({ user: formData }));
+        });
+
+        // Funcție pentru a verifica dacă emailul este deja utilizat
+        function checkEmailAvailability(email) {
+            return new Promise((resolve, reject) => {
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', 'http://localhost:3000/check_email?email=' + email, true); // Adresare către ruta definită în routes.rb
+                xhr.onload = function() {
+                    if (xhr.status == 200) {
+                        // Emailul este disponibil
+                        resolve(true);
+                    } else {
+                        // Emailul este deja utilizat sau a apărut o eroare
+                        reject(false);
+                    }
+                };
+                xhr.onerror = function() {
+                    // Eroare la cererea HTTP
+                    reject(false);
+                };
+                xhr.send();
+            });
+        }
+
+        // Real-time validation
+        document.getElementById('username').addEventListener('input', validateUsername);
+        document.getElementById('email').addEventListener('input', validateEmail);
+        document.getElementById('password').addEventListener('input', validatePassword);
+        document.getElementById('confirm-password').addEventListener('input', validateConfirmPassword);
+
+        function validateUsername() {
+            var usernameValue = document.getElementById('username').value.trim();
+            var messageElement = document.getElementById('usernameMessage');
+
+            if (/^[a-zA-Z0-9\s]+$/.test(usernameValue)) {
+                messageElement.textContent = "Valid username.";
+                messageElement.classList.remove('text-danger');
+                messageElement.classList.add('text-success');
+                if (allValidationsPassed()) {
+                    enableSignUpButton();
+                } else {
+                    disableSignUpButton();
+                }
+            } else {
+                messageElement.textContent = "Username can only contain letters, numbers, and spaces.";
+                messageElement.classList.remove('text-success');
+                messageElement.classList.add('text-danger');
+                disableSignUpButton();
+            }
+        }
+
+        // Funcție care validează emailul în timp real
+        function validateEmail() {
+            var emailValue = document.getElementById('email').value.trim();
+            var messageElement = document.getElementById('emailMessage');
+
+            var testEmailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(emailValue);
+
+            if (testEmailRegex) {
+                checkEmailAvailability(emailValue)
+                    .then(() => {
+                        // Emailul este disponibil
+                        messageElement.textContent = "Valid email address.";
+                        messageElement.classList.remove('text-danger');
+                        messageElement.classList.add('text-success');
+                        if (allValidationsPassed()) {
+                            enableSignUpButton();
+                        } else {
+                            disableSignUpButton();
+                        }
+                    })
+                    .catch(() => {
+                        // Emailul este deja utilizat sau a apărut o eroare la conectarea la server
+                        // Avem acelasi mesaj pentru ambele cazuri(sunt tratate ca unul intreg)
+                        messageElement.textContent = "Email already in use.";
+                        messageElement.classList.remove('text-success');
+                        messageElement.classList.add('text-danger');
+                        disableSignUpButton();
+                    });
+            } else {
+                messageElement.textContent = "Enter a valid email address (e.g., example@gmail.com).";
+                messageElement.classList.remove('text-success');
+                messageElement.classList.add('text-danger');
+                disableSignUpButton();
+            }
+        }
+
+        function validatePassword() {
+            var passwordValue = document.getElementById('password').value.trim();
+            var messageElement = document.getElementById('passwordMessage');
+
+            if (passwordValue.length >= 6 && /^(?=.*[a-zA-Z])(?=.*\d).*$/.test(passwordValue)) {
+                messageElement.textContent = "Valid password";
+                messageElement.classList.remove('text-danger');
+                messageElement.classList.add('text-success');
+                if (allValidationsPassed()) {
+                    enableSignUpButton();
+                } else {
+                    disableSignUpButton();
+                }
+            } else {
+                messageElement.textContent = "Password must be at least 6 characters long and contain both letters and numbers";
+                messageElement.classList.remove('text-success');
+                messageElement.classList.add('text-danger');
+                disableSignUpButton();
+            }
+        }
+
+        function validateConfirmPassword() {
+            var confirmPasswordValue = document.getElementById('confirm-password').value.trim();
+            var passwordValue = document.getElementById('password').value.trim();
+            var messageElement = document.getElementById('confirmPasswordMessage');
+
+            if (confirmPasswordValue === passwordValue) {
+                messageElement.textContent = "Passwords match.";
+                messageElement.classList.remove('text-danger');
+                messageElement.classList.add('text-success');
+                if (allValidationsPassed()) {
+                    enableSignUpButton();
+                } else {
+                    disableSignUpButton();
+                }
+            } else {
+                messageElement.textContent = "Passwords do not match.";
+                messageElement.classList.remove('text-success');
+                messageElement.classList.add('text-danger');
+                disableSignUpButton();
+            }
+        }
+
+        function allValidationsPassed() {
+            return document.getElementById('usernameMessage').classList.contains('text-success') &&
+                document.getElementById('emailMessage').classList.contains('text-success') &&
+                document.getElementById('passwordMessage').classList.contains('text-success') &&
+                document.getElementById('confirmPasswordMessage').classList.contains('text-success');
+        }
+
+        function enableSignUpButton() {
+            document.getElementById('signup-button').disabled = false;
+        }
+
+        function disableSignUpButton() {
+            document.getElementById('signup-button').disabled = true;
+        }
+    </script>
+</body>
+</html>
